@@ -13,7 +13,7 @@ public class DificultyController : MonoBehaviour {
 
     public int curLevel = 0;
 	// Use this for initialization
-	void Start () {
+	void Awake () {
 
         lists = new List<GameObject>[] { level1, level2, level3, level4, level5};
     }

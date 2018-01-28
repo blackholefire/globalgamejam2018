@@ -17,14 +17,35 @@ public class ObstacleSpawning : MonoBehaviour {
 
     private bool spawnedNext = false;
 
+    private PlayerController player;
+
+    public GameObject fireWall;
+
+    public GameObject puzzle;
+
+    public List<GameObject> allPuzzles;
+
+
+    void Awake()
+    {
+        dificulty = GameObject.Find("DifficultyController").GetComponent<DificultyController>();
+        foreach(Transform t in puzzle.transform)
+        {
+            Destroy(t.gameObject);
+        }
+        Instantiate(allPuzzles[dificulty.curLevel], puzzle.transform);
+
+    }
 
     // Use this for initialization
     void Start () {
 
+        player = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
+
         block.AddRange(dificulty.lists[dificulty.curLevel]);
         Renderer rend = GetComponent<Renderer>();
 
-        obstacleCount = 9 * (dificulty.curLevel + 1);
+        obstacleCount = 5 * (dificulty.curLevel + 1);
 
         Vector3 offset = transform.position - transform.forward * rend.bounds.min.z;
         Vector3 pos = transform.position + offset;
@@ -44,6 +65,7 @@ public class ObstacleSpawning : MonoBehaviour {
             pos.z -= maxGap;
         }
 
+
 	}
 	
 	// Update is called once per frame
@@ -56,12 +78,18 @@ public class ObstacleSpawning : MonoBehaviour {
 #endif
     }
 
-    void SpawnNext()
+    public void SpawnNext()
     {
-        dificulty.curLevel++;
-        print(GetComponent<Renderer>().bounds.max.z);
-        Vector3 newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z + 400);
-        Instantiate(floor, newPos, Quaternion.identity);
-        spawnedNext = true;
+        if (dificulty.curLevel < 5)
+        {
+            dificulty.curLevel++;
+            print(GetComponent<Renderer>().bounds.max.z);
+            Vector3 newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z + 400);
+            player.curLevel = Instantiate(floor, newPos, Quaternion.identity);
+            player.curLevel.GetComponent<ObstacleSpawning>().backWall.SetActive(false);
+            player.lives = 5;
+            player.dashCharge = 100;
+            spawnedNext = true;
+        }
     }
 }

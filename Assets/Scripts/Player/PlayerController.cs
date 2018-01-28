@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour {
     public float speed = 2.0f;
@@ -14,6 +17,17 @@ public class PlayerController : MonoBehaviour {
     public GameObject teleportObject;
 
     public Animator cameraAnim;
+
+    public int lives = 5;
+
+    public GameObject deathCollider;
+
+    //Death Stuff
+    public GameObject lastCheckPoint;
+    public GameObject curLevel;
+
+    public Image dashFill;
+    public Text healthNum;
     
 
     [Range(0, 100)]
@@ -23,13 +37,19 @@ public class PlayerController : MonoBehaviour {
     bool isGrounded;
 
     Rigidbody rb;
+    bool alive = true;
+    bool killed = false;
+
 	// Use this for initialization
 	void Start ()
     {
         rb = GetComponent<Rigidbody>();
         jump = new Vector3(0.0f, 2.0f, 0.0f);
         dashCharge = 100;
-	}
+
+        lastCheckPoint = Instantiate(new GameObject("Checkpoint"), transform.position, Quaternion.identity);
+        lastCheckPoint.transform.parent = curLevel.transform;
+    }
 
     void Update()
     {
@@ -38,6 +58,8 @@ public class PlayerController : MonoBehaviour {
             InvokeRepeating("Charge", 2.0f, 0.5f);
             isCharging = true;
         }
+        dashFill.fillAmount = dashCharge / 100;
+        healthNum.text = lives.ToString();
     }
 	
 	// Update is called once per frame
@@ -116,7 +138,7 @@ public class PlayerController : MonoBehaviour {
     void Charge()
     {
         if (dashCharge < 100)
-            dashCharge += 0.25f;
+            dashCharge += 1.5f;
         else
         {
             isCharging = false;
@@ -131,8 +153,68 @@ public class PlayerController : MonoBehaviour {
         {
             PlatformController.moving = false;
             cameraAnim.SetTrigger("Top");
-            other.gameObject.GetComponent<ObstacleSpawning>().backWall.SetActive(true);
+            other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().backWall.SetActive(true);
+            deathCollider.SetActive(false);
+            other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().SpawnNext();
         }
+        if (other.gameObject.tag == "Death" && alive)
+        {
+            //alive = false;
+            lives--;
+            transform.position = lastCheckPoint.transform.position;
+            dashCharge = 100;
+            killed = true;
+
+        }
+        if (other.gameObject.tag == "Death" && !alive)
+        {
+            alive = true;
+        }
+
+        if (other.gameObject.tag == "Win")
+        {
+            SceneManager.LoadScene("winMenu");
+        }
+
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        if (other.gameObject.GetComponent<PuzzlePiece>())
+        {
+            if(Input.GetButtonDown("Action"))
+                other.gameObject.transform.Rotate(0, other.gameObject.transform.rotation.y + 45, 0);
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.tag == "Ground")
+        {
+            lastCheckPoint.transform.position = transform.position;
+            cameraAnim.SetTrigger("Follow");
+            lastCheckPoint.transform.parent = curLevel.transform;
+            other.isTrigger = false;
+
+            deathCollider.SetActive(true);
+
+            PlatformController.moving = true;
+        }
+
+        if (other.gameObject.tag == "Death" && alive)
+        {
+            alive = false;
+        }
+
+        if (other.gameObject.tag == "Death" && !alive)
+        {
+            alive = true;
+        }
+    }
+
+    void Death()
+    {
+        // Load Death Scene Here
     }
 
 }
