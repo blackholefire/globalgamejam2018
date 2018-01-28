@@ -84,7 +84,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\ObstacleSpawning.cs" />
+    <Compile Include="Assets\Scripts\CameraTransition.cs" />
+    <Compile Include="Assets\Scripts\DificultyController.cs" />
+    <Compile Include="Assets\Scripts\Platform\ObstacleSpawning.cs" />
+    <Compile Include="Assets\Scripts\Platform\PlatformController.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
   </ItemGroup>
   <ItemGroup>
