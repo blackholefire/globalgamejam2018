@@ -14,7 +14,8 @@ public class PlayerController : MonoBehaviour {
 
     public GameObject gameModel;
 
-    public GameObject teleportObject;
+    public GameObject teleportObjectOut;
+    public GameObject teleportObjectIn;
 
     public Animator cameraAnim;
 
@@ -24,7 +25,7 @@ public class PlayerController : MonoBehaviour {
 
     //Death Stuff
     public GameObject lastCheckPoint;
-    public GameObject curLevel;
+    public ObstacleSpawning curLevel;
 
     public Image dashFill;
     public Text healthNum;
@@ -39,85 +40,171 @@ public class PlayerController : MonoBehaviour {
     Rigidbody rb;
     bool alive = true;
     bool killed = false;
+    bool atPuzzle = false;
+
+    float aliveTimer;
+    const float aliveTimerMax = 1.0f;
+
+    public Animator playerAnim;
+
+    private AudioSource audioSource;
+    [Header("Audio")]
+    public AudioClip teleportSound;
+    public AudioClip jumpSound;
+    public AudioClip puzzleTurn;
+    
 
 	// Use this for initialization
 	void Start ()
     {
+
+        audioSource = GetComponent<AudioSource>();
+        lives = lives + 1;
         rb = GetComponent<Rigidbody>();
         jump = new Vector3(0.0f, 2.0f, 0.0f);
         dashCharge = 100;
 
-        lastCheckPoint = Instantiate(new GameObject("Checkpoint"), transform.position, Quaternion.identity);
-        lastCheckPoint.transform.parent = curLevel.transform;
+        //lastCheckPoint = Instantiate(new GameObject("Checkpoint"), transform.position, Quaternion.identity);
+        //lastCheckPoint.transform.parent = curLevel.transform;
+
+        lastCheckPoint = curLevel.checkpoint;
+
+        Vector3 movement = new Vector3(0, 0.0f, 6);
+
+        rb.velocity = movement;
     }
 
     void Update()
     {
-        if(dashCharge < 100 && !isCharging)
+        if (alive)
         {
-            InvokeRepeating("Charge", 2.0f, 0.5f);
-            isCharging = true;
+            if (dashCharge < 100 && !isCharging)
+            {
+                InvokeRepeating("Charge", 2.0f, 0.5f);
+                isCharging = true;
+            }
         }
         dashFill.fillAmount = dashCharge / 100;
         healthNum.text = lives.ToString();
+
+        if (Input.GetButtonDown("Action") && pieceToTurn)
+        {
+            pieceToTurn.transform.Rotate(0, pieceToTurn.transform.rotation.y + 90, 0);
+            audioSource.PlayOneShot(puzzleTurn);
+
+        }
+
+        if(!atPuzzle)
+            if (Input.GetButtonDown("Dash") && dashCharge > 0 && dashCharge >= 25) Dash();
+
+
     }
 	
 	// Update is called once per frame
 	void FixedUpdate ()
     {
-        float h = speed * Input.GetAxis("Horizontal");
-        float v = speed * Input.GetAxis("Vertical");
-
-        Vector3 movement = new Vector3(h, 0.0f, v);
-
-        rb.AddForce(movement * speed);
-
-        if (rb.velocity.z > maxSpeed)
+        if (alive)
         {
-            rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+            float h = speed * Input.GetAxis("Horizontal");
+            float v = speed * Input.GetAxis("Vertical");
+
+            if (!atPuzzle)
+            {
+                maxSpeed = 6;
+                v = 0;
+            }
+            else
+                maxSpeed = 3;
+
+
+            Vector3 movement = new Vector3(h, 0.0f, v);
+
+            rb.AddForce(movement * speed);
+
+            if (rb.velocity.z > maxSpeed)
+            {
+                rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+            }
+
+            if (rb.velocity.z < -maxSpeed)
+            {
+                rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, -maxSpeed);
+            }
+
+            if (rb.velocity.x > maxSpeed)
+            {
+                rb.velocity = new Vector3(maxSpeed, rb.velocity.y, rb.velocity.z);
+            }
+
+            if (rb.velocity.x < -maxSpeed)
+            {
+                rb.velocity = new Vector3(-maxSpeed, rb.velocity.y, rb.velocity.z);
+            }
+
+            float Angle = 2.5f;
+
+            Vector3 newVel = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+
+           Vector3 Axis = Vector3.Cross(newVel, -transform.up);
+           gameModel.transform.Rotate(Axis, Angle, Space.World);
+
+
+            if (!isGrounded && rb.velocity.y == 0)
+            {
+                isGrounded = true;
+            }
+
+            if (Input.GetButton("Jump") && isGrounded)
+            {
+                playerAnim.SetTrigger("Jump");
+                rb.AddForce(jump * jumpForce, ForceMode.Impulse);
+                audioSource.PlayOneShot(jumpSound, 1.0f);
+                isGrounded = false;
+            }
+
+            if (transform.position.y > 1)
+                rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+
+
+            //rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (!gameModel.GetComponent<Renderer>().isVisible && alive)
+        {
+            alive = false;
+            lives--;
+            transform.position = lastCheckPoint.transform.position;
+            dashCharge = 100;
+            killed = true;
+            PlatformController.moving = false;
         }
 
-        if (rb.velocity.z < -maxSpeed)
+        if (gameModel.GetComponent<Renderer>().isVisible && !alive)
         {
-            rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, -maxSpeed);
+            aliveTimer += Time.deltaTime;
+            if (aliveTimer >= aliveTimerMax)
+            {
+                alive = true;
+                aliveTimer = 0;
+                PlatformController.moving = true;
+            }
         }
-
-        if (rb.velocity.x > maxSpeed)
-        {
-            rb.velocity = new Vector3(maxSpeed, rb.velocity.y, rb.velocity.z);
-        }
-
-        if (rb.velocity.x < -maxSpeed)
-        {
-            rb.velocity = new Vector3(-maxSpeed, rb.velocity.y, rb.velocity.z);
-        }
-
-        float Angle = 10;
-        Vector3 Axis = Vector3.Cross(movement.normalized, transform.up);
-        gameModel.transform.Rotate(Axis, Angle);
-
-        if (!isGrounded && rb.velocity.y == 0)
-        {
-            isGrounded = true;
-        }
-
-        if (Input.GetButton("Jump") && isGrounded)
-        {
-            rb.AddForce(jump * jumpForce, ForceMode.Impulse);
-            isGrounded = false;
-        }
-
-        if (Input.GetButtonDown("Dash") && dashCharge > 0 && dashCharge >= 25) Dash();
     }
 
     void Dash()
     {
-        Vector3 movement = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
+        //Vector3 movement = new Vector3(Input.GetAxis("Horizontal"), 0.0f, Input.GetAxis("Vertical"));
         //movement = Vector3.ClampMagnitude(movement, 1);
 
-        Instantiate(teleportObject, new Vector3( transform.position.x , 1.0f, transform.position.z), Quaternion.Euler(90 , 20, 50));
+        playerAnim.SetTrigger("Teleport");
+        audioSource.PlayOneShot(teleportSound, 0.5f);
 
-        transform.position = transform.position + movement * dashSpeed;
+       // Instantiate(teleportObjectOut, new Vector3( transform.position.x , 1.0f, transform.position.z), Quaternion.Euler(90 , 20, 50));
+
+        transform.position = transform.position + new Vector3(0,0,1) * dashSpeed;
 
         if(transform.position.x > 4.3f)
         {
@@ -130,7 +217,7 @@ public class PlayerController : MonoBehaviour {
 
         dashCharge -= 25;
 
-        Instantiate(teleportObject, new Vector3(transform.position.x, 1.0f, transform.position.z), Quaternion.Euler(90, 20, 50));
+        Instantiate(teleportObjectIn, new Vector3(transform.position.x, 1.0f, transform.position.z), Quaternion.Euler(90, 20, 50), gameObject.transform);
 
 
     }
@@ -138,7 +225,7 @@ public class PlayerController : MonoBehaviour {
     void Charge()
     {
         if (dashCharge < 100)
-            dashCharge += 1.5f;
+            dashCharge += 1f;
         else
         {
             isCharging = false;
@@ -147,43 +234,53 @@ public class PlayerController : MonoBehaviour {
     }
 
 
+
     void OnTriggerEnter(Collider other)
     {
         if(other.gameObject.tag == "Ground")
         {
             PlatformController.moving = false;
             cameraAnim.SetTrigger("Top");
+            atPuzzle = true;
             other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().backWall.SetActive(true);
-            deathCollider.SetActive(false);
-            other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().SpawnNext();
+            //deathCollider.SetActive(false);
+            if(!PlatformController.moving)
+                other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().SpawnNext();
         }
+
+
+        //Death
         if (other.gameObject.tag == "Death" && alive)
         {
             //alive = false;
-            lives--;
-            transform.position = lastCheckPoint.transform.position;
-            dashCharge = 100;
-            killed = true;
+            //lives--;
+            //transform.position = lastCheckPoint.transform.position;
+            //dashCharge = 100;
+            //killed = true;
 
         }
         if (other.gameObject.tag == "Death" && !alive)
         {
-            alive = true;
+           // alive = true;
         }
 
         if (other.gameObject.tag == "Win")
         {
+            PlatformController.moving = true;
             SceneManager.LoadScene("winMenu");
         }
 
     }
 
+    //Puzzle piece to turn
+    private GameObject pieceToTurn;
+
     void OnTriggerStay(Collider other)
     {
+        //Puzzle
         if (other.gameObject.GetComponent<PuzzlePiece>())
         {
-            if(Input.GetButtonDown("Action"))
-                other.gameObject.transform.Rotate(0, other.gameObject.transform.rotation.y + 45, 0);
+            pieceToTurn = other.gameObject;
         }
     }
 
@@ -191,24 +288,29 @@ public class PlayerController : MonoBehaviour {
     {
         if (other.gameObject.tag == "Ground")
         {
-            lastCheckPoint.transform.position = transform.position;
+            //lastCheckPoint.transform.position = transform.position;
             cameraAnim.SetTrigger("Follow");
-            lastCheckPoint.transform.parent = curLevel.transform;
+            //lastCheckPoint.transform.parent = curLevel.transform;
             other.isTrigger = false;
-
-            deathCollider.SetActive(true);
+            atPuzzle = false;
+            //deathCollider.SetActive(true);
 
             PlatformController.moving = true;
         }
 
         if (other.gameObject.tag == "Death" && alive)
         {
-            alive = false;
+           // alive = false;
         }
 
         if (other.gameObject.tag == "Death" && !alive)
         {
-            alive = true;
+            //alive = true;
+        }
+
+        if (other.gameObject.GetComponent<PuzzlePiece>())
+        {
+            pieceToTurn = null;
         }
     }
 

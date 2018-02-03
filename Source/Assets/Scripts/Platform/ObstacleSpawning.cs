@@ -11,7 +11,7 @@ public class ObstacleSpawning : MonoBehaviour {
 
     public GameObject backWall;
 
-    public int obstacleCount = 10;
+    public static int obstacleCount = 15;
 
     public float maxGap = 15;
 
@@ -24,6 +24,8 @@ public class ObstacleSpawning : MonoBehaviour {
     public GameObject puzzle;
 
     public List<GameObject> allPuzzles;
+
+    public GameObject checkpoint;
 
 
     void Awake()
@@ -38,58 +40,86 @@ public class ObstacleSpawning : MonoBehaviour {
     }
 
     // Use this for initialization
-    void Start () {
+    void Start() {
 
         player = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
 
         block.AddRange(dificulty.lists[dificulty.curLevel]);
+
+        if (dificulty.curLevel >= 2)
+        {
+
+            block.RemoveRange(0, dificulty.lists[dificulty.curLevel - 2].Count);
+
+        }
         Renderer rend = GetComponent<Renderer>();
 
-        obstacleCount = 5 * (dificulty.curLevel + 1);
+        obstacleCount += 3 ;
+        if (obstacleCount > 25)
+            obstacleCount = 25;
 
         Vector3 offset = transform.position - transform.forward * rend.bounds.min.z;
         Vector3 pos = transform.position + offset;
 
-        pos.z = pos.z - 10.0f;
+        pos.z = pos.z - 10;
 
-        float range = (rend.bounds.min.z)- (rend.bounds.max.z);
+        float range = (rend.bounds.min.z -20)- (pos.z);
         maxGap = Mathf.Abs(range / obstacleCount);
+
         pos.x = 0;
         pos.y = 1f;
         for (int i = 0; i < obstacleCount; i++)
         {
+
+            bool spawnNew = false;
             GameObject o = block[Random.Range(0, block.Count)];
 
             GameObject spawned = Instantiate(o, pos, Quaternion.identity);
-            spawned.transform.SetParent(this.transform);
-            pos.z -= maxGap;
+            Collider[] colliders = Physics.OverlapSphere(spawned.transform.position, 4, 1 << 8);
+
+            if (colliders.Length > 1 )
+            {
+                foreach(Collider c in colliders)
+                {
+                    if(c.gameObject != spawned)
+                    {
+                        Destroy(c.gameObject);
+                    }
+                }
+                //continue;
+            }
+                spawned.transform.SetParent(this.transform);
+                pos.z -= maxGap;
+            if (pos.z < rend.bounds.min.z +10)
+                break;  
         }
 
 
 	}
-	
-	// Update is called once per frame
-	void Update () {
 #if UNITY_EDITOR
+    // Update is called once per frame
+    void Update () {
+
         if (Input.GetKeyDown(KeyCode.Return) && !spawnedNext)
         {
             SpawnNext();
         }
-#endif
     }
+#endif
 
     public void SpawnNext()
     {
-        if (dificulty.curLevel < 5)
+        if (dificulty.curLevel < 4)
         {
-            dificulty.curLevel++;
             print(GetComponent<Renderer>().bounds.max.z);
             Vector3 newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z + 400);
-            player.curLevel = Instantiate(floor, newPos, Quaternion.identity);
-            player.curLevel.GetComponent<ObstacleSpawning>().backWall.SetActive(false);
+            player.curLevel = Instantiate(floor, newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
+            player.lastCheckPoint = player.curLevel.checkpoint;
+            player.curLevel.backWall.SetActive(false);
             player.lives = 5;
             player.dashCharge = 100;
             spawnedNext = true;
+            dificulty.curLevel++;
         }
     }
 }
