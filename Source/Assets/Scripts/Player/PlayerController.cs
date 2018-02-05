@@ -52,6 +52,7 @@ public class PlayerController : MonoBehaviour {
     public AudioClip teleportSound;
     public AudioClip jumpSound;
     public AudioClip puzzleTurn;
+    public AudioClip deathSound;
     
 
 	// Use this for initialization
@@ -176,6 +177,7 @@ public class PlayerController : MonoBehaviour {
         {
             alive = false;
             lives--;
+            audioSource.PlayOneShot(deathSound, 0.5f);
             transform.position = lastCheckPoint.transform.position;
             dashCharge = 100;
             killed = true;
@@ -289,7 +291,7 @@ public class PlayerController : MonoBehaviour {
         if (other.gameObject.tag == "Ground")
         {
             //lastCheckPoint.transform.position = transform.position;
-            cameraAnim.SetTrigger("Follow");
+            //cameraAnim.SetTrigger("Follow");
             //lastCheckPoint.transform.parent = curLevel.transform;
             other.isTrigger = false;
             atPuzzle = false;

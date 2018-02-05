@@ -15,13 +15,9 @@ public class CameraTransition : MonoBehaviour {
     public bool test = false;
 
 	// Use this for initialization
-	void Start () {
-		
-	}
+
 	
 	// Update is called once per frame
-	void Update () {
 
-	}
 
 }

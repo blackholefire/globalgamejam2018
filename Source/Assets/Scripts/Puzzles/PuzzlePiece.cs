@@ -14,8 +14,10 @@ public class PuzzlePiece : MonoBehaviour {
 
     bool canNext = false;
 
+    bool hasOpened = false;
+
 	// Use this for initialization
-	void Start () {
+	void Awake () {
         controller = gameObject.transform.parent.parent.GetComponent<PuzzleController>();
 	}
 
@@ -23,8 +25,12 @@ public class PuzzlePiece : MonoBehaviour {
     {
         if (lastPiece && prevCirc.on)
         {
-            if(canNext)
+            if(canNext && !hasOpened)
+            {
+                hasOpened = true;
                 controller.Open();
+            }
+                
         }
 
         if (prevCirc)
