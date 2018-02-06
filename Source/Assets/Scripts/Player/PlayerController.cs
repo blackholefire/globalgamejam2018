@@ -13,13 +13,14 @@ public class PlayerController : MonoBehaviour {
     public float dashSpeed = 4;
 
     public GameObject gameModel;
+    public Renderer modelRen;
 
     public GameObject teleportObjectOut;
     public GameObject teleportObjectIn;
 
     public Animator cameraAnim;
 
-    public int lives = 5;
+    public int lives = 3;
 
     public GameObject deathCollider;
 
@@ -53,6 +54,7 @@ public class PlayerController : MonoBehaviour {
     public AudioClip jumpSound;
     public AudioClip puzzleTurn;
     public AudioClip deathSound;
+    public AudioClip pickUpSound;
     
 
 	// Use this for initialization
@@ -73,6 +75,8 @@ public class PlayerController : MonoBehaviour {
         Vector3 movement = new Vector3(0, 0.0f, 6);
 
         rb.velocity = movement;
+
+        modelRen = gameModel.GetComponent<Renderer>();
     }
 
     void Update()
@@ -97,6 +101,9 @@ public class PlayerController : MonoBehaviour {
 
         if(!atPuzzle)
             if (Input.GetButtonDown("Dash") && dashCharge > 0 && dashCharge >= 25) Dash();
+
+        if (lives < 0)
+            Death();
 
 
     }
@@ -144,7 +151,9 @@ public class PlayerController : MonoBehaviour {
 
             float Angle = 2.5f;
 
-            Vector3 newVel = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+           Vector3 newVel = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+            if (atPuzzle)
+                newVel = rb.velocity;
 
            Vector3 Axis = Vector3.Cross(newVel, -transform.up);
            gameModel.transform.Rotate(Axis, Angle, Space.World);
@@ -155,7 +164,7 @@ public class PlayerController : MonoBehaviour {
                 isGrounded = true;
             }
 
-            if (Input.GetButton("Jump") && isGrounded)
+            if (Input.GetButton("Jump") && isGrounded && !atPuzzle)
             {
                 playerAnim.SetTrigger("Jump");
                 rb.AddForce(jump * jumpForce, ForceMode.Impulse);
@@ -173,7 +182,7 @@ public class PlayerController : MonoBehaviour {
 
     void LateUpdate()
     {
-        if (!gameModel.GetComponent<Renderer>().isVisible && alive)
+        if (!modelRen.isVisible && alive)
         {
             alive = false;
             lives--;
@@ -184,7 +193,7 @@ public class PlayerController : MonoBehaviour {
             PlatformController.moving = false;
         }
 
-        if (gameModel.GetComponent<Renderer>().isVisible && !alive)
+        if (modelRen.isVisible && !alive)
         {
             aliveTimer += Time.deltaTime;
             if (aliveTimer >= aliveTimerMax)
@@ -227,7 +236,7 @@ public class PlayerController : MonoBehaviour {
     void Charge()
     {
         if (dashCharge < 100)
-            dashCharge += 1f;
+            dashCharge += 0.5f;
         else
         {
             isCharging = false;
@@ -239,11 +248,12 @@ public class PlayerController : MonoBehaviour {
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.tag == "Ground")
+        if(other.CompareTag("Ground"))
         {
             PlatformController.moving = false;
             cameraAnim.SetTrigger("Top");
             atPuzzle = true;
+            playerAnim.SetBool("Idle", true);
             other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().backWall.SetActive(true);
             //deathCollider.SetActive(false);
             if(!PlatformController.moving)
@@ -251,25 +261,25 @@ public class PlayerController : MonoBehaviour {
         }
 
 
-        //Death
-        if (other.gameObject.tag == "Death" && alive)
-        {
-            //alive = false;
-            //lives--;
-            //transform.position = lastCheckPoint.transform.position;
-            //dashCharge = 100;
-            //killed = true;
-
-        }
-        if (other.gameObject.tag == "Death" && !alive)
-        {
-           // alive = true;
-        }
-
-        if (other.gameObject.tag == "Win")
+        if (other.CompareTag("Win"))
         {
             PlatformController.moving = true;
             SceneManager.LoadScene("winMenu");
+        }
+
+        if(other.CompareTag("Health"))
+        {
+            lives++;
+            if (lives > 9)
+                lives = 9;
+            audioSource.PlayOneShot(pickUpSound, 0.5f);
+            Destroy(other.gameObject);
+        }
+        if(other.CompareTag("Dash"))
+        {
+            dashCharge += 25;
+            audioSource.PlayOneShot(pickUpSound, 0.5f);
+            Destroy(other.gameObject);
         }
 
     }
@@ -280,7 +290,7 @@ public class PlayerController : MonoBehaviour {
     void OnTriggerStay(Collider other)
     {
         //Puzzle
-        if (other.gameObject.GetComponent<PuzzlePiece>())
+        if (other.CompareTag("PuzzlePiece"))
         {
             pieceToTurn = other.gameObject;
         }
@@ -288,26 +298,17 @@ public class PlayerController : MonoBehaviour {
 
     void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.tag == "Ground")
+        if (other.CompareTag("Ground"))
         {
             //lastCheckPoint.transform.position = transform.position;
             //cameraAnim.SetTrigger("Follow");
             //lastCheckPoint.transform.parent = curLevel.transform;
             other.isTrigger = false;
             atPuzzle = false;
+            playerAnim.SetBool("Idle", false);
             //deathCollider.SetActive(true);
 
             PlatformController.moving = true;
-        }
-
-        if (other.gameObject.tag == "Death" && alive)
-        {
-           // alive = false;
-        }
-
-        if (other.gameObject.tag == "Death" && !alive)
-        {
-            //alive = true;
         }
 
         if (other.gameObject.GetComponent<PuzzlePiece>())
@@ -318,7 +319,7 @@ public class PlayerController : MonoBehaviour {
 
     void Death()
     {
-        // Load Death Scene Here
+        SceneManager.LoadScene("menu");
     }
 
 }

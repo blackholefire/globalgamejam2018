@@ -84,17 +84,17 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scenes\screenLoader.cs" />
-    <Compile Include="Assets\Scripts\Blur.cs" />
     <Compile Include="Assets\Scripts\CameraTransition.cs" />
     <Compile Include="Assets\Scripts\DificultyController.cs" />
     <Compile Include="Assets\Scripts\ParticleMovmentCap.cs" />
+    <Compile Include="Assets\Scripts\PauseController.cs" />
     <Compile Include="Assets\Scripts\Platform\ObstacleSpawning.cs" />
     <Compile Include="Assets\Scripts\Platform\PlatformController.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Puzzles\PuzzleCircuit.cs" />
     <Compile Include="Assets\Scripts\Puzzles\PuzzleController.cs" />
     <Compile Include="Assets\Scripts\Puzzles\PuzzlePiece.cs" />
+    <Compile Include="Assets\UI\screenLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Standard Assets\Cameras\CameraGuidelines.txt" />

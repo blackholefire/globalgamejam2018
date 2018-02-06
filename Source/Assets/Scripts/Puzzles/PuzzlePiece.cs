@@ -7,6 +7,9 @@ public class PuzzlePiece : MonoBehaviour {
     public PuzzleCircuit nextCirc;
     public PuzzleCircuit prevCirc;
 
+    private GameObject nextObj;
+    private GameObject prevObj;
+
     public PuzzleController controller;
 
     public bool lastPiece;
@@ -19,6 +22,10 @@ public class PuzzlePiece : MonoBehaviour {
 	// Use this for initialization
 	void Awake () {
         controller = gameObject.transform.parent.parent.GetComponent<PuzzleController>();
+        if(nextCirc)
+            nextObj = nextCirc.gameObject;
+        if(prevCirc)
+            prevObj = prevCirc.gameObject;
 	}
 
     void Update()
@@ -28,6 +35,10 @@ public class PuzzlePiece : MonoBehaviour {
             if(canNext && !hasOpened)
             {
                 hasOpened = true;
+                if(controller == null)
+                {
+                    gameObject.transform.parent.parent.GetComponent<PuzzleController>();
+                }
                 controller.Open();
             }
                 
@@ -46,9 +57,11 @@ public class PuzzlePiece : MonoBehaviour {
 	// Update is called once per frame
     void OnTriggerStay(Collider other)
     {
-        if (other.gameObject.GetComponent<PuzzleCircuit>())
+        if (other.CompareTag("PuzzleCircuit"))
         {
-            if (other.gameObject.GetComponent<PuzzleCircuit>() == nextCirc)
+            //PuzzleCircuit otherCirc = other.gameObject.GetComponent<PuzzleCircuit>();
+
+            if (other.gameObject == nextObj)
             {
                 if (prevCirc)
                 {
@@ -58,7 +71,7 @@ public class PuzzlePiece : MonoBehaviour {
                 else
                     nextCirc.on = true;
             }
-            if (other.gameObject.GetComponent<PuzzleCircuit>() == prevCirc)
+            if (other.gameObject == prevObj)
             {
                 canNext = true;
             }
@@ -67,13 +80,14 @@ public class PuzzlePiece : MonoBehaviour {
 
     void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.GetComponent<PuzzleCircuit>())
+        if (other.CompareTag("PuzzleCircuit"))
         {
-            if (other.gameObject.GetComponent<PuzzleCircuit>() == nextCirc)
+            //PuzzleCircuit otherCirc = other.gameObject.GetComponent<PuzzleCircuit>();
+            if (other.gameObject == nextObj)
             {
                     nextCirc.on = false;
             }
-            if (other.gameObject.GetComponent<PuzzleCircuit>() == prevCirc)
+            if (other.gameObject == prevObj)
             {
                 //prevCirc.on = false;
                 canNext = false;

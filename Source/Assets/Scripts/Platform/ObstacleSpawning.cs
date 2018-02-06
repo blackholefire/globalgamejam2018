@@ -27,6 +27,10 @@ public class ObstacleSpawning : MonoBehaviour {
 
     public GameObject checkpoint;
 
+    private const int powerUpChance = 20;
+
+    public List<GameObject> powerUps;
+
 
     void Awake()
     {
@@ -71,7 +75,13 @@ public class ObstacleSpawning : MonoBehaviour {
         for (int i = 0; i < obstacleCount; i++)
         {
 
-            bool spawnNew = false;
+
+            int r = Random.Range(0, 100);
+            if(r < powerUpChance)
+            {
+                SpawnPowerUp(rend, pos.z, range);
+            }
+
             GameObject o = block[Random.Range(0, block.Count)];
 
             GameObject spawned = Instantiate(o, pos, Quaternion.identity);
@@ -111,15 +121,36 @@ public class ObstacleSpawning : MonoBehaviour {
     {
         if (dificulty.curLevel < 4)
         {
-            print(GetComponent<Renderer>().bounds.max.z);
+            //print(GetComponent<Renderer>().bounds.max.z);
             Vector3 newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z + 400);
             player.curLevel = Instantiate(floor, newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
             player.lastCheckPoint = player.curLevel.checkpoint;
             player.curLevel.backWall.SetActive(false);
-            player.lives = 5;
+            if(player.lives < 3)
+                player.lives = 3;
             player.dashCharge = 100;
             spawnedNext = true;
             dificulty.curLevel++;
         }
+    }
+
+    void SpawnPowerUp(Renderer ren, float z, float range)
+    {
+        float xPos = Random.Range(ren.bounds.min.x, ren.bounds.max.x);
+        float zPos = z + 5;
+        if (zPos > range)
+            zPos = range;
+
+        Vector3 spawnPosition = new Vector3(xPos, 0.5f, z + 5);
+        Collider[] colliders = Physics.OverlapSphere(spawnPosition, 1, 1 << 8);
+
+        while (colliders.Length > 0)
+        {
+            spawnPosition = new Vector3(Random.Range(ren.bounds.min.x, ren.bounds.max.x), spawnPosition.y, spawnPosition.z + 1);
+            colliders = Physics.OverlapSphere(spawnPosition, 1, 1 << 8); 
+        }
+        GameObject spawned = Instantiate(powerUps[Random.Range(0, powerUps.Count)], spawnPosition, Quaternion.identity);
+        spawned.transform.parent = transform;
+
     }
 }
