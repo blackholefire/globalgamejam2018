@@ -112,7 +112,7 @@ public class PlayerController : MonoBehaviour {
             if (!atPuzzle)
                 if (Input.GetButtonDown("Dash") && dashCharge > 0 && dashCharge >= 25) Dash();
 
-            if (lives < 0)
+            if (lives <= 0)
                 Death();
 
         }
@@ -273,8 +273,10 @@ public class PlayerController : MonoBehaviour {
 
         if (other.CompareTag("Win"))
         {
-            PlatformController.moving = true;
-            SceneManager.LoadScene("winMenu");
+            //PlatformController.moving = true;
+            playerAnim.enabled = false;
+            EndGameController.Instance.SetWin();
+            alive = false;
         }
 
         if(other.CompareTag("Health"))
@@ -329,7 +331,9 @@ public class PlayerController : MonoBehaviour {
 
     void Death()
     {
-        SceneManager.LoadScene("menu");
+        alive = false;
+        playerAnim.enabled = false;
+        EndGameController.Instance.SetLoss();
     }
 
 }

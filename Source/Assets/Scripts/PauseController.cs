@@ -20,7 +20,9 @@ public class PauseController : MonoBehaviour {
 
     void Start()
     {
+        paused = false;
         pauseAnim = GetComponent<Animator>();
+        Cursor.visible = false;
     }
  
 	// Update is called once per frame
@@ -42,6 +44,7 @@ public class PauseController : MonoBehaviour {
     void PauseGame()
     {
         cameraBlur.enabled = true;
+        Cursor.visible = true;
         Time.timeScale = 0;
         paused = true;
         HUD_anim.SetBool("Paused", true);
@@ -52,6 +55,7 @@ public class PauseController : MonoBehaviour {
     public void UnPauseGame()
     {
         cameraBlur.enabled = false;
+        Cursor.visible = false;
         Time.timeScale = 1;
         paused = false;
         HUD_anim.SetBool("Paused", false);
