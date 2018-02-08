@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 
 public class PauseController : MonoBehaviour {
 
-    bool paused = false;
+    public static bool paused = false;
     public BlurOptimized cameraBlur;
 
     public Button resumebtn;

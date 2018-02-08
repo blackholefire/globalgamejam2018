@@ -20,8 +20,8 @@ public class PuzzlePiece : MonoBehaviour {
     bool hasOpened = false;
 
 	// Use this for initialization
-	void Awake () {
-        controller = gameObject.transform.parent.parent.GetComponent<PuzzleController>();
+	void Start () {
+        controller = gameObject.transform.parent.GetComponent<PuzzleController>();
         if(nextCirc)
             nextObj = nextCirc.gameObject;
         if(prevCirc)
@@ -30,15 +30,17 @@ public class PuzzlePiece : MonoBehaviour {
 
     void Update()
     {
+        if (controller == null)
+        {
+           gameObject.transform.parent.GetComponent<PuzzleController>();
+        }
+
         if (lastPiece && prevCirc.on)
         {
             if(canNext && !hasOpened)
             {
                 hasOpened = true;
-                if(controller == null)
-                {
-                    gameObject.transform.parent.parent.GetComponent<PuzzleController>();
-                }
+                
                 controller.Open();
             }
                 

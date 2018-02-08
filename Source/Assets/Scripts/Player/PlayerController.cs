@@ -55,7 +55,8 @@ public class PlayerController : MonoBehaviour {
     public AudioClip puzzleTurn;
     public AudioClip deathSound;
     public AudioClip pickUpSound;
-    
+
+    float unpauseTimer = 0.5f;
 
 	// Use this for initialization
 	void Start ()
@@ -81,37 +82,46 @@ public class PlayerController : MonoBehaviour {
 
     void Update()
     {
-        if (alive)
+        if (PauseController.paused)
         {
-            if (dashCharge < 100 && !isCharging)
+            unpauseTimer = 0;
+        }
+
+        if (!PauseController.paused)
+        {
+            unpauseTimer += Time.deltaTime;
+
+            if (alive)
             {
-                InvokeRepeating("Charge", 2.0f, 0.5f);
-                isCharging = true;
+                if (dashCharge < 100 && !isCharging)
+                {
+                    InvokeRepeating("Charge", 2.0f, 0.5f);
+                    isCharging = true;
+                }
             }
+            dashFill.fillAmount = dashCharge / 100;
+            healthNum.text = lives.ToString();
+
+            if (Input.GetButtonDown("Action") && pieceToTurn)
+            {
+                pieceToTurn.transform.Rotate(0, pieceToTurn.transform.rotation.y + 90, 0);
+                audioSource.PlayOneShot(puzzleTurn);
+
+            }
+
+            if (!atPuzzle)
+                if (Input.GetButtonDown("Dash") && dashCharge > 0 && dashCharge >= 25) Dash();
+
+            if (lives < 0)
+                Death();
+
         }
-        dashFill.fillAmount = dashCharge / 100;
-        healthNum.text = lives.ToString();
-
-        if (Input.GetButtonDown("Action") && pieceToTurn)
-        {
-            pieceToTurn.transform.Rotate(0, pieceToTurn.transform.rotation.y + 90, 0);
-            audioSource.PlayOneShot(puzzleTurn);
-
-        }
-
-        if(!atPuzzle)
-            if (Input.GetButtonDown("Dash") && dashCharge > 0 && dashCharge >= 25) Dash();
-
-        if (lives < 0)
-            Death();
-
-
     }
 	
 	// Update is called once per frame
 	void FixedUpdate ()
     {
-        if (alive)
+        if (alive && !PauseController.paused)
         {
             float h = speed * Input.GetAxis("Horizontal");
             float v = speed * Input.GetAxis("Vertical");
@@ -164,7 +174,7 @@ public class PlayerController : MonoBehaviour {
                 isGrounded = true;
             }
 
-            if (Input.GetButton("Jump") && isGrounded && !atPuzzle)
+            if (Input.GetButton("Jump") && isGrounded && !atPuzzle && unpauseTimer > 0.5f)
             {
                 playerAnim.SetTrigger("Jump");
                 rb.AddForce(jump * jumpForce, ForceMode.Impulse);

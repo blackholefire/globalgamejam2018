@@ -119,8 +119,9 @@ public class ObstacleSpawning : MonoBehaviour {
 
     public void SpawnNext()
     {
-        if (dificulty.curLevel < 4)
+        if (dificulty.curLevel < 5)
         {
+            dificulty.curLevel++;
             //print(GetComponent<Renderer>().bounds.max.z);
             Vector3 newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z + 400);
             player.curLevel = Instantiate(floor, newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
@@ -130,7 +131,7 @@ public class ObstacleSpawning : MonoBehaviour {
                 player.lives = 3;
             player.dashCharge = 100;
             spawnedNext = true;
-            dificulty.curLevel++;
+            
         }
     }
 
