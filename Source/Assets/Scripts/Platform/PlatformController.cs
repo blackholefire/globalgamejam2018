@@ -6,11 +6,7 @@ public class PlatformController : MonoBehaviour {
     public int speed = 2;
     public static bool moving = true;
 	// Use this for initialization
-	
-    void Start()
-    {
-        moving = true;
-    }
+
 
 	// Update is called once per frame
 	void Update () {

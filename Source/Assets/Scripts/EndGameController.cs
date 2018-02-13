@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityStandardAssets.ImageEffects;
 
 public class EndGameController : MonoBehaviour {
     private static EndGameController _instance;
@@ -15,7 +16,10 @@ public class EndGameController : MonoBehaviour {
 
     public Text resultText;
 
-    private GameObject child;
+    private Animator childAnim;
+    public Button menuButton;
+
+    private BlurOptimized cameraBlur;
 
     private void Awake()
     {
@@ -27,7 +31,8 @@ public class EndGameController : MonoBehaviour {
             _instance = this;
         }
 
-        child = transform.GetChild(0).gameObject;
+        childAnim = transform.GetChild(0).GetComponent<Animator>();
+        cameraBlur = Camera.main.GetComponent<BlurOptimized>();
     }
 
     // Use this for initialization
@@ -35,15 +40,19 @@ public class EndGameController : MonoBehaviour {
     {
         Cursor.visible = true;
         resultText.text = lossText;
-        child.SetActive(true);
+        childAnim.SetTrigger("End");
         PlatformController.moving = false;
+        menuButton.Select();
+        cameraBlur.enabled = true;
     }
 
     public void SetWin()
     {
         Cursor.visible = true;
         resultText.text = winText;
-        child.SetActive(true);
+        childAnim.SetTrigger("End");
         PlatformController.moving = false;
+        menuButton.Select();
+        cameraBlur.enabled = true;
     }
 }

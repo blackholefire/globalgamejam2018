@@ -20,7 +20,7 @@ public class MainMenuAnimationController : MonoBehaviour {
 
     string transitionTo;
 
-    float checkTimer = 2.5f;
+    float checkTimer = 0f;
 	// Use this for initialization
 	void Start () {
         anim = GetComponent<Animator>();
@@ -36,7 +36,7 @@ public class MainMenuAnimationController : MonoBehaviour {
             bool isController = false;
             for (int i = 0; i < Input.GetJoystickNames().Length; i++)
             {
-                print(Input.GetJoystickNames()[i]);
+                //print(Input.GetJoystickNames()[i]);
                 if (Input.GetJoystickNames()[i] == "")
                 {
                     isController = false;

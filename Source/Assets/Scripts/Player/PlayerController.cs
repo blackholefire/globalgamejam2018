@@ -44,7 +44,7 @@ public class PlayerController : MonoBehaviour {
     bool atPuzzle = false;
 
     float aliveTimer;
-    const float aliveTimerMax = 1.0f;
+    const float aliveTimerMax = 2f;
 
     public Animator playerAnim;
 
@@ -61,6 +61,7 @@ public class PlayerController : MonoBehaviour {
 	// Use this for initialization
 	void Start ()
     {
+        //PlatformController.moving = true;
 
         audioSource = GetComponent<AudioSource>();
         lives = lives + 1;
@@ -102,6 +103,9 @@ public class PlayerController : MonoBehaviour {
             dashFill.fillAmount = dashCharge / 100;
             healthNum.text = lives.ToString();
 
+            if (dashCharge > 100)
+                dashCharge = 100;
+
             if (Input.GetButtonDown("Action") && pieceToTurn)
             {
                 pieceToTurn.transform.Rotate(0, pieceToTurn.transform.rotation.y + 90, 0);
@@ -139,12 +143,16 @@ public class PlayerController : MonoBehaviour {
 
             rb.AddForce(movement * speed);
 
-            if (rb.velocity.z > maxSpeed)
+            if (rb.velocity.z > maxSpeed && atPuzzle)
             {
                 rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+            }else if (rb.velocity.z > 0 && !atPuzzle)
+            {
+               rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, 0);
+                
             }
 
-            if (rb.velocity.z < -maxSpeed)
+                if (rb.velocity.z < -maxSpeed)
             {
                 rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, -maxSpeed);
             }
@@ -159,7 +167,7 @@ public class PlayerController : MonoBehaviour {
                 rb.velocity = new Vector3(-maxSpeed, rb.velocity.y, rb.velocity.z);
             }
 
-            float Angle = 2.5f;
+            float Angle = 1.5f;
 
            Vector3 newVel = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
             if (atPuzzle)
@@ -184,9 +192,20 @@ public class PlayerController : MonoBehaviour {
 
             if (transform.position.y > 1)
                 rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+            
 
 
             //rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, maxSpeed);
+        }
+
+        if (!atPuzzle)
+        {
+            if (transform.position.y < 0)
+                transform.position = new Vector3(transform.position.x, 1, transform.position.z);
+            if (transform.position.z < curLevel.rend.bounds.min.z)
+            {
+                transform.position = new Vector3(transform.position.x, 1, transform.position.z + 5);
+            }
         }
     }
 
@@ -289,7 +308,7 @@ public class PlayerController : MonoBehaviour {
         }
         if(other.CompareTag("Dash"))
         {
-            dashCharge += 25;
+            dashCharge += 50;
             audioSource.PlayOneShot(pickUpSound, 0.5f);
             Destroy(other.gameObject);
         }
@@ -334,6 +353,7 @@ public class PlayerController : MonoBehaviour {
         alive = false;
         playerAnim.enabled = false;
         EndGameController.Instance.SetLoss();
+        this.enabled = false;
     }
 
 }
