@@ -285,8 +285,8 @@ public class PlayerController : MonoBehaviour {
             playerAnim.SetBool("Idle", true);
             other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().backWall.SetActive(true);
             //deathCollider.SetActive(false);
-            if(!PlatformController.moving)
-                other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().SpawnNext();
+            //if(!PlatformController.moving)
+            //    other.transform.parent.gameObject.GetComponent<ObstacleSpawning>().SpawnNext();
         }
 
 
@@ -304,13 +304,13 @@ public class PlayerController : MonoBehaviour {
             if (lives > 9)
                 lives = 9;
             audioSource.PlayOneShot(pickUpSound, 0.5f);
-            Destroy(other.gameObject);
+            other.gameObject.SetActive(false);
         }
         if(other.CompareTag("Dash"))
         {
             dashCharge += 50;
             audioSource.PlayOneShot(pickUpSound, 0.5f);
-            Destroy(other.gameObject);
+            other.gameObject.SetActive(false);
         }
 
     }
@@ -324,6 +324,10 @@ public class PlayerController : MonoBehaviour {
         if (other.CompareTag("PuzzlePiece"))
         {
             pieceToTurn = other.gameObject;
+            if (!PauseController.promptActive)
+            {
+                PauseController.ShowPrompt();
+            }
         }
     }
 
@@ -345,6 +349,7 @@ public class PlayerController : MonoBehaviour {
         if (other.gameObject.GetComponent<PuzzlePiece>())
         {
             pieceToTurn = null;
+            PauseController.HidePrompt();
         }
     }
 

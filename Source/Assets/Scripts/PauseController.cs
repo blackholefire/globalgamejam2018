@@ -6,13 +6,24 @@ using UnityEngine.UI;
 using UnityStandardAssets.ImageEffects;
 using UnityEngine.SceneManagement;
 
-public class PauseController : MonoBehaviour {
+public class PauseController : MonoBehaviour
+{
 
     public static bool paused = false;
     public BlurOptimized cameraBlur;
 
     public Button resumebtn;
     public EventSystem eventSystem;
+
+    public Image controllerImage;
+    public Image keyboardImage;
+    public GameObject prompt;
+    static GameObject staticPrompt;
+
+    public static bool promptActive = false;
+
+    static Image contrImg;
+    static Image keyImg;
 
     public Animator HUD_anim;
 
@@ -23,10 +34,14 @@ public class PauseController : MonoBehaviour {
         paused = false;
         pauseAnim = GetComponent<Animator>();
         Cursor.visible = false;
+        contrImg = controllerImage;
+        keyImg = keyboardImage;
+        staticPrompt = prompt;
     }
- 
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update()
+    {
         if (Input.GetButtonDown("Pause"))
         {
             switch (paused)
@@ -39,7 +54,7 @@ public class PauseController : MonoBehaviour {
                     break;
             }
         }
-	}
+    }
 
     void PauseGame()
     {
@@ -71,5 +86,43 @@ public class PauseController : MonoBehaviour {
     public void Quit()
     {
         Application.Quit();
+    }
+
+    public static void ShowPrompt()
+    {
+        promptActive = true;
+        bool isController = false;
+        if (Input.GetJoystickNames().Length > 0)
+        {
+            for (int i = 0; i < Input.GetJoystickNames().Length; i++)
+            {
+                //print(Input.GetJoystickNames()[i]);
+                if (Input.GetJoystickNames()[i] == "")
+                {
+                    isController = false;
+                }
+                else isController = true;
+            }
+        }
+
+        if (isController)
+        {
+            contrImg.enabled = true;
+            keyImg.enabled = false;
+        }
+        else
+        {
+            contrImg.enabled = false;
+            keyImg.enabled = true;
+        }
+
+        staticPrompt.SetActive(true);
+
+    }
+
+    public static void HidePrompt()
+    {
+        promptActive = false;
+        staticPrompt.SetActive(false);
     }
 }

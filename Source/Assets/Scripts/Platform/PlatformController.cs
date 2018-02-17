@@ -17,6 +17,6 @@ public class PlatformController : MonoBehaviour {
     void OnBecameInvisible()
     {
         if (moving)
-            Destroy(gameObject);
+            gameObject.SetActive(false);
     }
 }

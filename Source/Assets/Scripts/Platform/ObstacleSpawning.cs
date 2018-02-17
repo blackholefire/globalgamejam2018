@@ -6,7 +6,8 @@ using UnityEngine;
 public class ObstacleSpawning : MonoBehaviour, IPooledObject {
 
     public GameObject floor;
-    public List<GameObject> block;
+    public static List<GameObject> block = new List<GameObject>();
+    //public List<GameObject> pubBlock;
 
     public DificultyController dificulty;
 
@@ -57,39 +58,39 @@ public class ObstacleSpawning : MonoBehaviour, IPooledObject {
 
     // Use this for initialization
     void Start() {
-
         player = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
+        //block = new List<GameObject>();
 
-
-        if(dificulty.curLevel < 5)
+        if (dificulty.curLevel < 5)
             block.AddRange(dificulty.lists[dificulty.curLevel]);
 
-        if (dificulty.curLevel == 3)
+        if (dificulty.curLevel == 2)
         {
-            foreach (GameObject obj in dificulty.lists[0])
+            foreach (GameObject obj in dificulty.level1)
             {
-                block.Remove(obj);
+                if(block.Contains(obj))
+                    block.Remove(obj);
             }
             //block.RemoveRange(0, dificulty.lists[0].Count);
             //block.RemoveRange(0, dificulty.lists[1].Count);
         }
 
-
         rend = GetComponent<Renderer>();
 
-        if(dificulty.curLevel > 0)
+        if (dificulty.curLevel > 0)
         {
-            obstacleCount += 5;
-            if (obstacleCount > 25)
-                obstacleCount = 25;
+            obstacleCount += 7;
+            if (obstacleCount > 40)
+                obstacleCount = 40;
         }
+
 
         Vector3 offset = transform.position - transform.forward * rend.bounds.min.z;
         Vector3 pos = transform.position + offset;
 
         pos.z = pos.z - 10;
 
-        float range = (rend.bounds.min.z +5)- (pos.z);
+        float range = (rend.bounds.min.z + 5) - (pos.z);
         maxGap = Mathf.Abs(range / obstacleCount);
 
         pos.x = 0;
@@ -99,7 +100,7 @@ public class ObstacleSpawning : MonoBehaviour, IPooledObject {
 
 
             int r = UnityEngine.Random.Range(0, 100);
-            if(r < powerUpChance)
+            if (r < powerUpChance)
             {
                 SpawnPowerUp(rend, pos.z, offset);
             }
@@ -109,25 +110,26 @@ public class ObstacleSpawning : MonoBehaviour, IPooledObject {
             GameObject spawned = Instantiate(o, pos, Quaternion.identity);
             Collider[] colliders = Physics.OverlapSphere(spawned.transform.position, 4, 1 << 8);
 
-            if (colliders.Length > 1 )
+            if (colliders.Length > 1)
             {
-                foreach(Collider c in colliders)
+                foreach (Collider c in colliders)
                 {
-                    if(c.gameObject != spawned)
+                    if (c.gameObject != spawned)
                     {
                         Destroy(c.gameObject);
                     }
                 }
                 //continue;
             }
-                spawned.transform.SetParent(this.transform);
-                pos.z -= maxGap;
+            spawned.transform.SetParent(this.transform);
+            pos.z -= maxGap;
             //if (pos.z < rend.bounds.min.z + 10)
-               // break;  
+            // break;  
         }
 
+        //dificulty.curLevel++;
 
-	}
+    }
 #if UNITY_EDITOR
     // Update is called once per frame
     void Update () {
@@ -146,8 +148,8 @@ public class ObstacleSpawning : MonoBehaviour, IPooledObject {
             dificulty.curLevel++;
             //print(GetComponent<Renderer>().bounds.max.z);
             Vector3 newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z + 400);
-            player.curLevel = Instantiate(floor, newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
-            //player.curLevel = ObjectPooler.Instance.SpawnFromPool("Level", newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
+            //player.curLevel = Instantiate(floor, newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
+            player.curLevel = ObjectPooler.Instance.SpawnFromPool("Level", newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
             player.lastCheckPoint = player.curLevel.checkpoint;
             player.curLevel.backWall.SetActive(false);
             if(player.lives < 3)
