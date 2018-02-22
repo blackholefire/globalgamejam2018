@@ -220,6 +220,8 @@ public class PlayerController : MonoBehaviour {
             dashCharge = 100;
             killed = true;
             PlatformController.moving = false;
+            if (!cameraAnim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+                cameraAnim.SetTrigger("Follow");
         }
 
         if (modelRen.isVisible && !alive)

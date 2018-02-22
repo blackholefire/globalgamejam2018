@@ -14,6 +14,7 @@ public class ObstacleSpawning : MonoBehaviour, IPooledObject {
     public GameObject backWall;
 
     public static int obstacleCount = 15;
+    public const int  obstacleStart = 15;
 
     public float maxGap = 15;
 

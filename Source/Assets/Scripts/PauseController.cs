@@ -29,10 +29,13 @@ public class PauseController : MonoBehaviour
 
     Animator pauseAnim;
 
+    DificultyController difController;
+
     void Start()
     {
         paused = false;
         pauseAnim = GetComponent<Animator>();
+        difController = GameObject.FindObjectOfType<DificultyController>();
         Cursor.visible = false;
         contrImg = controllerImage;
         keyImg = keyboardImage;
@@ -80,6 +83,8 @@ public class PauseController : MonoBehaviour
 
     public void LoadMenu()
     {
+        ObstacleSpawning.obstacleCount = ObstacleSpawning.obstacleStart;
+        ObstacleSpawning.block = new List<GameObject>();
         SceneManager.LoadScene("menu");
     }
 
