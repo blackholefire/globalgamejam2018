@@ -11,15 +11,11 @@ public class DificultyController : MonoBehaviour {
 
     public List<GameObject>[] lists;
 
+
     public int curLevel = 0;
 	// Use this for initialization
 	void Awake () {
 
         lists = new List<GameObject>[] { level1, level2, level3, level4, level5};
     }
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 }

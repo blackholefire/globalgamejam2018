@@ -1,17 +1,20 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObstacleSpawning : MonoBehaviour {
+public class ObstacleSpawning : MonoBehaviour, IPooledObject {
 
     public GameObject floor;
-    public List<GameObject> block;
+    public static List<GameObject> block = new List<GameObject>();
+    //public List<GameObject> pubBlock;
 
     public DificultyController dificulty;
 
     public GameObject backWall;
 
-    public int obstacleCount = 10;
+    public static int obstacleCount = 15;
+    public const int  obstacleStart = 15;
 
     public float maxGap = 15;
 
@@ -25,9 +28,21 @@ public class ObstacleSpawning : MonoBehaviour {
 
     public List<GameObject> allPuzzles;
 
+    public GameObject checkpoint;
 
+    private const int powerUpChance = 15;
+
+    public List<GameObject> powerUps;
+
+    public Renderer rend;
     void Awake()
     {
+        foreach (Transform child in transform)
+        {
+            if (child.gameObject.tag == "Wall" || child.gameObject.tag == "Health" || child.gameObject.tag == "Dash")
+                child.gameObject.SetActive(false);
+        }
+
         dificulty = GameObject.Find("DifficultyController").GetComponent<DificultyController>();
         foreach(Transform t in puzzle.transform)
         {
@@ -37,59 +52,134 @@ public class ObstacleSpawning : MonoBehaviour {
 
     }
 
+    void IPooledObject.OnObjectSpawn()
+    {
+        rend = GetComponent<Renderer>();
+    }
+
     // Use this for initialization
-    void Start () {
-
+    void Start() {
         player = GameObject.FindWithTag("Player").GetComponent<PlayerController>();
+        //block = new List<GameObject>();
 
-        block.AddRange(dificulty.lists[dificulty.curLevel]);
-        Renderer rend = GetComponent<Renderer>();
+        if (dificulty.curLevel < 5)
+            block.AddRange(dificulty.lists[dificulty.curLevel]);
 
-        obstacleCount = 5 * (dificulty.curLevel + 1);
+        if (dificulty.curLevel == 2)
+        {
+            foreach (GameObject obj in dificulty.level1)
+            {
+                if(block.Contains(obj))
+                    block.Remove(obj);
+            }
+            //block.RemoveRange(0, dificulty.lists[0].Count);
+            //block.RemoveRange(0, dificulty.lists[1].Count);
+        }
+
+        rend = GetComponent<Renderer>();
+
+        if (dificulty.curLevel > 0)
+        {
+            obstacleCount += 7;
+            if (obstacleCount > 40)
+                obstacleCount = 40;
+        }
+
 
         Vector3 offset = transform.position - transform.forward * rend.bounds.min.z;
         Vector3 pos = transform.position + offset;
 
-        pos.z = pos.z - 10.0f;
+        pos.z = pos.z - 10;
 
-        float range = (rend.bounds.min.z)- (rend.bounds.max.z);
+        float range = (rend.bounds.min.z + 5) - (pos.z);
         maxGap = Mathf.Abs(range / obstacleCount);
+
         pos.x = 0;
         pos.y = 1f;
         for (int i = 0; i < obstacleCount; i++)
         {
-            GameObject o = block[Random.Range(0, block.Count)];
+
+
+            int r = UnityEngine.Random.Range(0, 100);
+            if (r < powerUpChance)
+            {
+                SpawnPowerUp(rend, pos.z, offset);
+            }
+
+            GameObject o = block[UnityEngine.Random.Range(0, block.Count)];
 
             GameObject spawned = Instantiate(o, pos, Quaternion.identity);
+            Collider[] colliders = Physics.OverlapSphere(spawned.transform.position, 4, 1 << 8);
+
+            if (colliders.Length > 1)
+            {
+                foreach (Collider c in colliders)
+                {
+                    if (c.gameObject != spawned)
+                    {
+                        Destroy(c.gameObject);
+                    }
+                }
+                //continue;
+            }
             spawned.transform.SetParent(this.transform);
             pos.z -= maxGap;
+            //if (pos.z < rend.bounds.min.z + 10)
+            // break;  
         }
 
+        //dificulty.curLevel++;
 
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    }
 #if UNITY_EDITOR
+    // Update is called once per frame
+    void Update () {
+
         if (Input.GetKeyDown(KeyCode.Return) && !spawnedNext)
         {
             SpawnNext();
         }
-#endif
     }
+#endif
 
     public void SpawnNext()
     {
         if (dificulty.curLevel < 5)
         {
             dificulty.curLevel++;
-            print(GetComponent<Renderer>().bounds.max.z);
+            //print(GetComponent<Renderer>().bounds.max.z);
             Vector3 newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z + 400);
-            player.curLevel = Instantiate(floor, newPos, Quaternion.identity);
-            player.curLevel.GetComponent<ObstacleSpawning>().backWall.SetActive(false);
-            player.lives = 5;
+            //player.curLevel = Instantiate(floor, newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
+            player.curLevel = ObjectPooler.Instance.SpawnFromPool("Level", newPos, Quaternion.identity).GetComponent<ObstacleSpawning>();
+            player.lastCheckPoint = player.curLevel.checkpoint;
+            player.curLevel.backWall.SetActive(false);
+            if(player.lives < 3)
+                player.lives = 3;
             player.dashCharge = 100;
             spawnedNext = true;
+            
         }
+    }
+
+    void SpawnPowerUp(Renderer ren, float z, Vector3 offset)
+    {
+        float xPos = UnityEngine.Random.Range(ren.bounds.min.x, ren.bounds.max.x);
+        Vector3 pos = transform.position + offset;
+        float range = pos.z - 15;
+        float zPos = z + 5;
+        if (zPos > range)
+            zPos = range;
+
+        Vector3 spawnPosition = new Vector3(xPos, 0.5f, zPos);
+        Collider[] colliders = Physics.OverlapSphere(spawnPosition, 1, 1 << 8);
+
+        while (colliders.Length > 0)
+        {
+            spawnPosition = new Vector3(UnityEngine.Random.Range(ren.bounds.min.x, ren.bounds.max.x), spawnPosition.y, spawnPosition.z + 1);
+            colliders = Physics.OverlapSphere(spawnPosition, 1, 1 << 8); 
+        }
+        GameObject spawned = Instantiate(powerUps[UnityEngine.Random.Range(0, powerUps.Count)], spawnPosition, Quaternion.identity);
+        spawned.transform.parent = transform;
+
     }
 }
